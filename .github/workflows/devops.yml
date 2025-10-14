@@ -37,7 +37,9 @@ jobs:
 
       # STEP: Ejecuta pruebas (Bash llamando a Python)
       - name: Run tests
-        run: pytest -q
+        run: |
+          export PYTHONPATH="${PYTHONPATH}:$(pwd)"
+          pytest -q
 
       # STEP: Crear un “output” del job usando GITHUB_OUTPUT (Bash)
       - name: Compute build tag
