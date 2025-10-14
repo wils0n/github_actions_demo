@@ -1,5 +1,5 @@
-name: CI básico Python + Bash
-run-name: "CI disparado por ${{ github.actor }}"
+name: CI basico Python y Bash
+run-name: CI disparado por ${{ github.actor }}
 
 on:
   push:
@@ -7,70 +7,68 @@ on:
   pull_request:
 
 jobs:
-  # JOB 1: Validación (Python) — corre en Ubuntu hospedado por GitHub
   test:
+    name: Test (Python)
     runs-on: ubuntu-latest
+
+    # Declaramos outputs del job para que otros jobs los consuman
+    outputs:
+      build_tag: ${{ steps.meta.outputs.tag }}
+
     steps:
-      # STEP: Trae el código al runner
       - name: Checkout
         uses: actions/checkout@v4
 
-      # STEP: Configura Python (action oficial)
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: '3.11'
 
-      # STEP: (Opcional) Cache de dependencias para acelerar
       - name: Cache pip
         uses: actions/cache@v4
         with:
           path: ~/.cache/pip
           key: pip-${{ runner.os }}-${{ hashFiles('requirements.txt') }}
-          restore-keys: pip-${{ runner.os }}-
+          restore-keys: |
+            pip-${{ runner.os }}-
 
-      # STEP: Instala dependencias (Bash)
       - name: Install deps
+        shell: bash
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      # STEP: Ejecuta pruebas (Bash llamando a Python)
       - name: Run tests
+        shell: bash
         run: pytest -q
 
-      # STEP: Crear un “output” del job usando GITHUB_OUTPUT (Bash)
       - name: Compute build tag
         id: meta
+        shell: bash
         run: |
-          TS=$(date +%Y%m%d-%H%M%S)
+          TS="$(date +%Y%m%d-%H%M%S)"
           echo "tag=${TS}-${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
 
-      # STEP: Publicar un artefacto con el reporte (ejemplo)
-      - name: Save artifact (sample log)
+      - name: Save artifact (build info)
+        shell: bash
         run: echo "Build tag: ${{ steps.meta.outputs.tag }}" > build-info.txt
-      - uses: actions/upload-artifact@v4
+
+      - name: Upload build info
+        uses: actions/upload-artifact@v4
         with:
           name: build-info
           path: build-info.txt
 
-  # JOB 2: Empaquetado (Bash) — depende del job de tests (secuencial)
   package:
+    name: Package (ZIP)
     needs: test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      # STEP: Usar el output del job anterior
-      - name: Read tag from previous job
-        run: echo "TAG = ${{ needs.test.outputs.meta_tag }}"
-        env:
-          # Exponemos el output del step meta como output de job usando needs.<job>.outputs.<name>
-          # Para eso definimos outputs del job test abajo (ver 'outputs:' en job test)
-          TAG: ${{ needs.test.outputs.build_tag }}
-
-      # STEP: Crear artefacto zip (Bash puro)
       - name: Create zip
+        shell: bash
         run: |
           mkdir -p dist
           cp hello.py dist/
@@ -82,11 +80,12 @@ jobs:
           name: app-zip
           path: dist/*.zip
 
-  # JOB 3: Tareas rápidas en paralelo (Bash) — NO depende de nadie
   docs:
+    name: Docs (echo paralelo)
     runs-on: ubuntu-latest
     steps:
-      - name: Echo info (Bash)
+      - name: Echo info
+        shell: bash
         run: |
           echo "Repo: $GITHUB_REPOSITORY"
           echo "Evento: $GITHUB_EVENT_NAME"
