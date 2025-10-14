@@ -60,7 +60,8 @@ jobs:
     needs: test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
       # STEP: Usar el output del job anterior
       - name: Read tag from previous job
