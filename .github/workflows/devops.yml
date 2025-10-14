@@ -48,7 +48,7 @@ jobs:
 
       # STEP: Publicar un artefacto con el reporte (ejemplo)
       - name: Save artifact (sample log)
-        run: echo "Build tag: ${{ steps.meta.outputs.tag }}" > build-info.txt
+        run: echo 'Build tag: ${{ steps.meta.outputs.tag }}' > build-info.txt
       - name: Upload build info artifact
         uses: actions/upload-artifact@v4
         with:
