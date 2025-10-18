@@ -108,17 +108,7 @@ jobs:
           name: app-zip
           path: dist/*.zip
 
-  # JOB 3: Tareas rápidas en paralelo (Bash) — NO depende de nadie
-  docs:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Echo info (Bash)
-        run: |
-          echo "Repo: $GITHUB_REPOSITORY"
-          echo "Evento: $GITHUB_EVENT_NAME"
-          echo "Runner: $RUNNER_OS"
-
-  # JOB 4: Sube imagen a AWS ERC
+  # JOB 3: Sube imagen a AWS ERC
   docker-ecr:
     needs: test
     runs-on: ubuntu-latest
@@ -180,3 +170,14 @@ jobs:
           echo '```' >> $GITHUB_STEP_SUMMARY
           echo "${{ steps.meta.outputs.tags }}" >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
+
+  # JOB 4: Tareas rápidas en paralelo (Bash) — NO depende de nadie
+  docs:
+    needs: docker-ecr
+    runs-on: ubuntu-latest
+    steps:
+      - name: Echo info (Bash)
+        run: |
+          echo "Repo: $GITHUB_REPOSITORY"
+          echo "Evento: $GITHUB_EVENT_NAME"
+          echo "Runner: $RUNNER_OS"
